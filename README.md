@@ -27,6 +27,21 @@ Each release should happen automatically.
 
 * extras: IaC, GitOps, semver, changelog
 
+### pipeline
+
+This repo now includes GitHub Actions for build and release.
+
+- `CI` workflow runs on `push` and `pull_request` to `main`.
+- `Release` workflow runs when a tag like `v1.0.0` is pushed.
+- The release workflow builds the Docker image, saves it as a tarball, and creates a GitHub release.
+
+To trigger a release:
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
 ### review
 
 * please review [shellscript](shell/script.sh)
