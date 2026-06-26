@@ -31,7 +31,7 @@ Each release should happen automatically.
 
 This repo now includes GitHub Actions for build and release.
 
-- `CI` workflow runs on `push` and `pull_request` to `main`.
+- `Build` workflow runs on `push` and `pull_request` to `main`.
 - `Release` workflow runs when a tag like `v1.0.0` is pushed.
 - The release workflow builds and pushes the Docker image to GitHub Container Registry (GHCR) and creates a GitHub release.
 
@@ -40,6 +40,27 @@ To trigger a release:
 ```bash
 git tag v1.0.0
 git push origin v1.0.0
+```
+
+### GitLab CI (also configured)
+
+This repo also includes GitLab CI pipeline files:
+
+- `.gitlab-ci.yml` (root include)
+- `gitlab/.gitlab-ci.yml` (actual jobs)
+
+Behavior:
+- `build` job runs on `main`
+- `release` job runs on tags like `v1.0.5`
+- release pushes image to GHCR using CI variables:
+	- `GHCR_USERNAME`
+	- `GHCR_TOKEN`
+
+To trigger a GitLab tag pipeline:
+
+```bash
+git tag v1.0.5
+git push gitlab v1.0.5
 ```
 
 ## My Solution
@@ -56,4 +77,37 @@ Releases are triggered by SemVer tags like v1.0.0.
 
 * please review [deployment](k8s/deployment.yaml)
 
-* extras: proper explanation
+## Troubleshooting (common Kubernetes errors)
+
+### CrashLoopBackOff
+
+Meaning:
+- Container starts, crashes, then Kubernetes keeps restarting it.
+
+Check:
+```bash
+kubectl get pods -n default
+kubectl describe pod <pod-name> -n default
+kubectl logs <pod-name> -n default
+```
+
+Typical fixes:
+- fix startup command/entrypoint
+- fix missing file or wrong path
+- fix port mismatch between app and container/service
+
+### ImagePullBackOff
+
+Meaning:
+- Kubernetes cannot pull the container image.
+
+Check:
+```bash
+kubectl describe pod <pod-name> -n default
+kubectl get deploy cardmarket -n default -o jsonpath='{.spec.template.spec.containers[0].image}'
+```
+
+Typical fixes:
+- verify image tag exists in GHCR
+- ensure image path is correct and lowercase owner is used
+- update `k8s/deployment.yaml` to a valid image tag and push changes
