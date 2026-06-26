@@ -7,7 +7,6 @@ on:
       - 'v*'
 
 permissions:
-  contents: write
   packages: write
 
 jobs:
@@ -22,12 +21,5 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - run: |
-          docker build -t ghcr.io/${{ github.repository_owner }}/cardmarket:${{ github.ref_name }} ./cardmarket
-          docker push ghcr.io/${{ github.repository_owner }}/cardmarket:${{ github.ref_name }}
-      - uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ github.ref_name }}
-          name: Release ${{ github.ref_name }}
-          body: Release for ${{ github.ref_name }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          docker build -t ghcr.io/harshadeevi/cardmarket:${{ github.ref_name }} ./cardmarket
+          docker push ghcr.io/harshadeevi/cardmarket:${{ github.ref_name }}
