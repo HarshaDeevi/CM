@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: write
+  packages: write
 
 jobs:
   release:
@@ -15,13 +16,18 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - run: docker build -t cardmarket:${{ github.ref_name }} ./cardmarket
-      - run: docker save cardmarket:${{ github.ref_name }} -o cardmarket-${{ github.ref_name }}.tar
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - run: |
+          docker build -t ghcr.io/${{ github.repository_owner }}/cardmarket:${{ github.ref_name }} ./cardmarket
+          docker push ghcr.io/${{ github.repository_owner }}/cardmarket:${{ github.ref_name }}
       - uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ github.ref_name }}
           name: Release ${{ github.ref_name }}
           body: Release for ${{ github.ref_name }}
-          files: cardmarket-${{ github.ref_name }}.tar
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cardmarket
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: cardmarket
+  template:
+    metadata:
+      labels:
+        app: cardmarket
+    spec:
+      containers:
+        - name: cardmarket
+          image: ghcr.io/HarshaDeevi/cardmarket:v1.0.0
+          ports:
+            - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cardmarket
+spec:
+  selector:
+    app: cardmarket
+  ports:
+    - port: 8080
+      targetPort: 8080
+  type: LoadBalancer
