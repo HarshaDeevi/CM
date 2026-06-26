@@ -42,6 +42,14 @@ git tag v1.0.0
 git push origin v1.0.0
 ```
 
+## My Solution
+
+I used kind as a local Kubernetes cluster.
+The app is a small BusyBox-based static web app.
+The Dockerfile is inside cardmarket/.
+The Kubernetes deployment is inside k8s/deployment.yaml.
+Releases are triggered by SemVer tags like v1.0.0.
+
 ### review
 
 * please review [shellscript](shell/script.sh)

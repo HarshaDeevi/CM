@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: cardmarket
-          image: ghcr.io/HarshaDeevi/cardmarket:v1.0.0
+          image: ghcr.io/harshadeevi/cardmarket:v1.0.0
           ports:
             - containerPort: 8080
 ---
@@ -28,4 +28,5 @@ spec:
   ports:
     - port: 8080
       targetPort: 8080
-  type: LoadBalancer
+      nodePort: 30080
+  type: NodePort
