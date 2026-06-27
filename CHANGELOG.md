@@ -1,8 +1,12 @@
 # Changelog
 
-## [Unreleased]
-- Renamed GitHub Actions workflow from `ci.yml` to `Build.yml`
-- Added Argo CD application manifest at `k8s/argocd.yaml` for GitOps sync
+## [1.0.5] - 2026-06-27
+- Added GitLab CI pipeline files (`.gitlab-ci.yml`, `gitlab/.gitlab-ci.yml`)
+- Verified GHCR image publish and pull for `v1.0.5`
+
+## [1.0.4] - 2026-06-26
+- Updated deployment image to `ghcr.io/harshadeevi/cardmarket:v1.0.4`
+- Synced Argo CD to latest deployment revision
 
 ## [1.0.3] - 2026-06-26
 - Simplified release workflow using `docker/build-push-action`
