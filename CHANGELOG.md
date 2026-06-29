@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.0.9] - 2026-06-29
+- Updated Cardmarket page version text and deployment image
+
+## [1.0.8] - 2026-06-29
+- Updated Cardmarket page version text
+
+## [1.0.7] - 2026-06-29
+- Updated deployment image and Argo CD sync
+
+## [1.0.6] - 2026-06-29
+- Verified final Cardmarket release flow
+
 ## [1.0.5] - 2026-06-27
 - Added GitLab CI pipeline files (`.gitlab-ci.yml`, `gitlab/.gitlab-ci.yml`)
 - Verified GHCR image publish and pull for `v1.0.5`
