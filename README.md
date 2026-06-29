@@ -1,113 +1,130 @@
 
-# Interviews
+# Cardmarket – Local Kubernetes + CI/CD + GitOps Demo
 
-## This repo contains tasks we request interviewees to complete
+This repository is my solution for a DevOps-style interview task.
 
-* This repository should be forked, candidates should work in their own forked versions.
-Please don't open pull requests with solutions agains this repository.
-* No tasks require the use of any paid services.
-* For all of the following tasks please use your favourite tools.
-* During the interview the interviewee guides us through
-their solution. Explaining decisions and technical concepts as we go.
-* Tasks can be solved in a very simplistic way or as complicated as you can imagine.
-Both can be valid.
+I built a simple containerized web app, deployed it to a local Kubernetes cluster, automated image releases, and wired GitOps reconciliation with Argo CD.
 
-### k8s deployment
+## What I implemented
 
-* please don't use cloud infra providers like AWS, GCP etc. The cluster should
-be a local one.
-  
-1. Set up a kubernetes cluster ie. kind, minikube, k3s etc.
-the one you like the most.
-2. Build and release an app. This application should have a dockerfile created
-by you and it should be built by you. This can be something very simple,
-ie traefik/whoami, hashicorp/http-echo, your own if you have one.
-Each release should happen automatically.
-3. Create a deployment of this app.
+1. Local Kubernetes cluster using kind
+2. Custom Docker image for a static web app
+3. Kubernetes deployment with 2 replicas + NodePort service
+4. Automated CI/CD release flow with SemVer tags
+5. GitOps sync with Argo CD
+6. Changelog-based release tracking
 
-* extras: IaC, GitOps, semver, changelog
+## Project structure
 
-### pipeline
+- [cardmarket](cardmarket)
+	- [cardmarket/Dockerfile](cardmarket/Dockerfile): BusyBox-based web container
+	- [cardmarket/index.html](cardmarket/index.html): App content
+	- [cardmarket/app.sh](cardmarket/app.sh): Shell helper script
+- [k8s](k8s)
+	- [k8s/deployment.yaml](k8s/deployment.yaml): `Deployment` (2 replicas)
+	- [k8s/service.yaml](k8s/service.yaml): `Service` (`NodePort`, 30080)
+	- [k8s/argocd.yaml](k8s/argocd.yaml): Argo CD `Application`
+- GitHub CI/CD
+	- [/.github/workflows/Build.yml](.github/workflows/Build.yml)
+	- [/.github/workflows/release.yml](.github/workflows/release.yml)
+- GitLab CI/CD
+	- [/.gitlab-ci.yml](.gitlab-ci.yml) (entry include)
+	- [gitlab/.gitlab-ci.yml](gitlab/.gitlab-ci.yml) (actual jobs)
+- Release history
+	- [CHANGELOG.md](CHANGELOG.md)
 
-This repo now includes GitHub Actions for build and release.
+## Why these choices
 
-- `Build` workflow runs on `push` and `pull_request` to `main`.
-- `Release` workflow runs when a tag like `v1.0.0` is pushed.
-- The release workflow builds and pushes the Docker image to GitHub Container Registry (GHCR) and creates a GitHub release.
+- kind keeps everything local and reproducible
+- BusyBox keeps the image lightweight and easy to explain
+- Separate build and release workflows keep CI intent clear
+- Argo CD gives continuous reconciliation from Git to cluster
 
-To trigger a release:
+## CI/CD behavior
 
-```bash
-git tag v1.0.0
-git push origin v1.0.0
-```
+### GitHub Actions
 
-### GitLab CI (also configured)
+- `Build` workflow runs on push/PR to `main`
+- `Release` workflow runs on tag push (`v*`)
+- Release publishes image to GHCR and creates GitHub Release
 
-This repo also includes GitLab CI pipeline files:
+### GitLab CI
 
-- `.gitlab-ci.yml` (root include)
-- `gitlab/.gitlab-ci.yml` (actual jobs)
-
-Behavior:
-- `build` job runs on `main`
-- `release` job runs on tags like `v1.0.5`
-- release pushes image to GHCR using CI variables:
+- `build_image` runs on `main`
+- `release_image` runs on tags
+- Release pushes image to GHCR using:
 	- `GHCR_USERNAME`
 	- `GHCR_TOKEN`
 
-To trigger a GitLab tag pipeline:
+## Release flow
+
+1. Create a tag like `v1.0.5`
+2. CI builds and pushes `ghcr.io/harshadeevi/cardmarket:v1.0.5`
+3. Update deployment image in [k8s/deployment.yaml](k8s/deployment.yaml)
+4. Argo CD detects Git change and syncs cluster
+
+## Quick start (local run)
+
+Build and test locally:
 
 ```bash
-git tag v1.0.5
-git push gitlab v1.0.5
+docker build -t cardmarket:local ./cardmarket
+docker run --rm -p 8080:8080 cardmarket:local
 ```
 
-## My Solution
+Create cluster and deploy:
 
-I used kind as a local Kubernetes cluster.
-The app is a small BusyBox-based static web app.
-The Dockerfile is inside cardmarket/.
-The Kubernetes deployment is inside k8s/deployment.yaml.
-Releases are triggered by SemVer tags like v1.0.0.
-
-### review
-
-* please review [shellscript](shell/script.sh)
-
-* please review [deployment](k8s/deployment.yaml)
-
-## Troubleshooting (common Kubernetes errors)
-
-### CrashLoopBackOff
-
-Meaning:
-- Container starts, crashes, then Kubernetes keeps restarting it.
-
-Check:
 ```bash
-kubectl get pods -n default
-kubectl describe pod <pod-name> -n default
-kubectl logs <pod-name> -n default
+kind create cluster --name cardmarket-cluster
+kubectl apply -f k8s/deployment.yaml
+kubectl apply -f k8s/service.yaml
+kubectl get deploy,pods,svc -n default
 ```
 
-Typical fixes:
-- fix startup command/entrypoint
-- fix missing file or wrong path
-- fix port mismatch between app and container/service
+Access app:
 
-### ImagePullBackOff
-
-Meaning:
-- Kubernetes cannot pull the container image.
-
-Check:
 ```bash
-kubectl describe pod <pod-name> -n default
-kubectl get deploy cardmarket -n default -o jsonpath='{.spec.template.spec.containers[0].image}'
+kubectl port-forward svc/cardmarket -n default 8082:8080
 ```
 
-Typical fixes:
-- verify image tag exists in GHCR
-- ensure image path is correct and lowercase owner is used
-- update `k8s/deployment.yaml` to a valid image tag and push changes
+Then open: http://localhost:8082
+
+## Argo CD
+
+Install and apply app config:
+
+```bash
+kubectl create namespace argocd
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+kubectl apply -f k8s/argocd.yaml
+kubectl get application argocd -n argocd
+```
+
+Healthy target state for demo:
+
+- `SYNC STATUS`: `Synced`
+- `HEALTH STATUS`: `Healthy`
+
+## Troubleshooting notes
+
+### `ImagePullBackOff`
+
+- Check image in deployment:
+	```bash
+	kubectl get deploy cardmarket -n default -o jsonpath='{.spec.template.spec.containers[0].image}'
+	```
+- Confirm tag exists in GHCR
+- Fix tag mismatch in [k8s/deployment.yaml](k8s/deployment.yaml)
+
+### `CrashLoopBackOff`
+
+- Inspect pod events/logs:
+	```bash
+	kubectl describe pod <pod-name> -n default
+	kubectl logs <pod-name> -n default
+	```
+- Validate command/path/port settings
+
+## One-line summary
+
+This project delivers a complete local DevOps flow: build, release, deploy, and continuously reconcile Kubernetes state from Git.
