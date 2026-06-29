@@ -14,6 +14,6 @@ spec:
     spec:
       containers:
         - name: cardmarket
-          image: ghcr.io/harshadeevi/cardmarket:v1.0.7
+          image: ghcr.io/harshadeevi/cardmarket:v1.0.8
           ports:
             - containerPort: 8080
